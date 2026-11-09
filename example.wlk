@@ -1,5 +1,23 @@
 class NucleoPersonalidad {
  var property temperatura
+ var acoplado = false
+
+ method estaAcoplado() = acoplado
+
+ method acoplar() {
+   if (acoplado) {
+     self.error("El núcleo ya está acoplado")
+   }
+   acoplado = true
+ }
+
+ method desacoplar() {
+   if (not acoplado) {
+     self.error("El núcleo no está acoplado")
+   }
+   acoplado = false
+ }
+
  method energiaRecarga(){
    return 25 * temperatura
  }
@@ -64,8 +82,67 @@ class CamaraDePrueba {
     carga += energia
   }
 
+  method nucleoMasCaliente() {
+    return nucleos.max({nucleo => nucleo.temperatura()})
+  }
 
+  method acoplar(nucleo) {
+    self.validarAsignado(nucleo)
+    self.validarTestigo(nucleo)
+    nucleo.acoplar()
+  }
 
+  method desacoplar(nucleo) {
+    self.validarAsignado(nucleo)
+    nucleo.desacoplar()
+  }
 
-   
+  method validarAsignado(nucleo) {
+    if (not nucleos.contains(nucleo)) {
+      self.error("El núcleo no está asignado a la cámara")
+    }
+  }
+
+  method validarTestigo(nucleo) {
+    if (not self.hayTestigoPara(nucleo)) {
+      self.error("No hay otro núcleo desacoplado que sirva de testigo")
+    }
+  }
+
+  method hayTestigoPara(nucleo) {
+    return nucleos.any({otro => otro != nucleo and not otro.estaAcoplado()})
+  }
+
+  method estaAcoplado(nucleo) {
+    self.validarAsignado(nucleo)
+    return nucleo.estaAcoplado()
+  }
+
+  method nucleosAcoplados() {
+    return nucleos.filter({nucleo => nucleo.estaAcoplado()})
+  }
+
+  method cantidadAcoplados() {
+    return self.nucleosAcoplados().size()
+  }
+}
+
+object apertureLaboratories {
+  const camaras = #{}
+
+  method agregarCamara(camara) {
+    camaras.add(camara)
+  }
+
+  method nucleosSobrecalentados() {
+    return camaras.map({camara => camara.nucleoMasCaliente()}).asSet()
+  }
+
+  method consumoDiario() {
+    return camaras.sum({camara => camara.consumo()})
+  }
+
+  method camaraConMasAcoplados() {
+    return camaras.max({camara => camara.cantidadAcoplados()})
+  }
 }

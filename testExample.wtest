@@ -38,9 +38,43 @@ describe "group of aperture" {
     assert.equals(3500, cam1.carga())
     assert.equals(100.25, moralidad.temperatura())
     assert.equals(90.15,espacio.temperatura())
-    assert.throwsException({cam1.abastacer()})
+    assert.throwsException({cam1.abastecer()})
     assert.equals(100.25, moralidad.temperatura())
     assert.equals(90.15,espacio.temperatura())
 
+  }
+
+  test "punto 2.2" {
+    const curiosidad = new NucleoPersonalidad(temperatura=82)
+    const cam2 = new CamaraDePrueba(nucleos=#{glados, curiosidad}, carga=0)
+
+    cam2.acoplar(glados)
+    assert.throwsException({cam2.acoplar(glados)})
+    assert.throwsException({cam2.acoplar(moralidad)})
+    assert.throwsException({cam2.acoplar(curiosidad)})
+    assert.throwsException({cam2.desacoplar(curiosidad)})
+    cam1.acoplar(espacio)
+    cam1.desacoplar(espacio)
+    cam1.acoplar(moralidad)
+
+    assert.equals(#{glados}, cam2.nucleosAcoplados())
+    assert.equals(#{moralidad}, cam1.nucleosAcoplados())
+    assert.that(cam1.estaAcoplado(moralidad))
+    assert.notThat(cam1.estaAcoplado(espacio))
+  }
+
+  test "aperture laboratories" {
+    const curiosidad = new NucleoPersonalidad(temperatura=82)
+    const cam2 = new CamaraDePrueba(nucleos=#{glados, curiosidad}, carga=0)
+    apertureLaboratories.agregarCamara(cam1)
+    apertureLaboratories.agregarCamara(cam2)
+
+    cam2.acoplar(glados)
+    cam1.acoplar(moralidad)
+    cam2.desacoplar(glados)
+
+    assert.equals(#{moralidad, curiosidad}, apertureLaboratories.nucleosSobrecalentados())
+    assert.equals(6550, apertureLaboratories.consumoDiario())
+    assert.equals(cam1, apertureLaboratories.camaraConMasAcoplados())
   }
 }

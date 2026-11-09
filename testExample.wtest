@@ -1,9 +1,46 @@
-import example.pepita
+import example.*
 
-describe "group of tests for pepita" {
+describe "group of aperture" {
 
-  test "pepita has initial energy" {
-    assert.equals(100, pepita.energy())
+
+  const moralidad = new NucleoPersonalidad(temperatura=100)
+  const espacio = new Corrupto(temperatura=90, corrupcion=0.5)
+  const hechos =  new Corrupto(temperatura=90, corrupcion=0.2)
+  const glados = new Central(temperatura=80)
+
+
+  const cam1 = new CamaraDePrueba(nucleos=#{moralidad, espacio}, carga=7500)
+  test "punto 1" {
+    assert.equals(2500, moralidad.energiaRecarga())
+    moralidad.recargar()    
+    assert.equals(100.25, moralidad.temperatura())
+
+
+    assert.equals(1500, espacio.energiaRecarga())
+    espacio.recargar()    
+    assert.equals(90.15, espacio.temperatura())
+    assert.equals(0.49, espacio.corrupcion())
+
+    assert.equals(500, glados.energiaRecarga())
+    glados.recargar()    
+    assert.equals(80.01, glados.temperatura())
+
+    assert.equals(600, hechos.energiaRecarga())
+    hechos.recargar()    
+    assert.equals(600, hechos.energiaRecarga())
+    assert.equals(0.2, hechos.corrupcion())
   }
 
+  test "punto 2.1" {
+  
+    assert.that(cam1.puedeAbastecer())
+    cam1.abastecer()
+    assert.equals(3500, cam1.carga())
+    assert.equals(100.25, moralidad.temperatura())
+    assert.equals(90.15,espacio.temperatura())
+    assert.throwsException({cam1.abastacer()})
+    assert.equals(100.25, moralidad.temperatura())
+    assert.equals(90.15,espacio.temperatura())
+
+  }
 }

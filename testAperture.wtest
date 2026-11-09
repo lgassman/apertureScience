@@ -1,0 +1,65 @@
+import aperture.*
+
+describe "aperture science" {
+  const moralidad = new NucleoDeMoralidad()
+  const inteligencia = new NucleoDeInteligencia(velocidad = 10, memoria = 8)
+  const ira = new NucleoDeIra(velocidad = 10, memoria = 8, emocionalidad = 100)
+  const glados = new GLaDOS(energia = 5000)
+
+  method incorporarNucleos() {
+    glados.incorporar(moralidad)
+    glados.incorporar(inteligencia)
+    glados.incorporar(ira)
+  }
+
+  test "1.1 moralidad" {
+    assert.equals(100, moralidad.capacidadDeResolver())
+    moralidad.usar()
+    moralidad.usar()
+    assert.equals(100, moralidad.capacidadDeResolver())
+    moralidad.usar()
+    assert.equals(50, moralidad.capacidadDeResolver())
+    moralidad.usar()
+    assert.equals(50, moralidad.capacidadDeResolver())
+  }
+
+  test "1.2 inteligencia e ira" {
+    assert.equals(80, inteligencia.capacidadDeResolver())
+    inteligencia.usar()
+    assert.equals(90, inteligencia.capacidadDeResolver())
+
+    assert.equals(60, ira.capacidadDeResolver())
+    ira.usar()
+    assert.equals(80, ira.capacidadDeResolver())
+  }
+
+  test "1.3 glados" {
+    self.incorporarNucleos()
+    assert.equals(240, glados.capacidadDeResolver())
+  }
+
+  test "2 camaras" {
+    self.incorporarNucleos()
+    assert.equals(40, glados.consumoPorSegundo())
+
+    glados.utilizar(new Camara(nivel = 200, duracion = 30))
+    assert.equals(3800, glados.energia())
+    assert.equals(270, glados.capacidadDeResolver())
+
+    assert.throwsException({ glados.utilizar(new Camara(nivel = 300, duracion = 10)) })
+    assert.equals(3800, glados.energia())
+    assert.equals(270, glados.capacidadDeResolver())
+
+    glados.utilizar(new Camara(nivel = 250, duracion = 20))
+    assert.equals(3000, glados.energia())
+
+    glados.utilizar(new Camara(nivel = 100, duracion = 25))
+    assert.equals(2000, glados.energia())
+    assert.equals(60, glados.consumoPorSegundo())
+    assert.equals(280, glados.capacidadDeResolver())
+
+    assert.throwsException({ glados.utilizar(new Camara(nivel = 200, duracion = 40)) })
+    assert.equals(2000, glados.energia())
+    assert.equals(280, glados.capacidadDeResolver())
+  }
+}

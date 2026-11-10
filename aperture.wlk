@@ -1,9 +1,9 @@
 class NucleoDeMoralidad {
-  var condicion = new CondicionNormal()
+  var condicion = new Normal()
 
   method capacidadDeResolver() = condicion.capacidadDeResolver()
 
-  method consumoPorSegundo() = condicion.consumoPorSegundo()
+  method potenciaExigida(camara) = camara.potenciaExigible() * condicion.porcentajeDePotencia() / 100
 
   method usar() {
     condicion.usar(self)
@@ -12,64 +12,75 @@ class NucleoDeMoralidad {
   method corromperse() {
     condicion = corrupto
   }
+
+  method normalizarse() {
+    condicion = new Normal()
+  }
 }
 
-class CondicionNormal {
-  var usos = 0
+class Normal {
+  var vecesUsado = 0
 
-  method capacidadDeResolver() = 100
+  method capacidadDeResolver() = 50 * (1 + vecesUsado)
 
-  method consumoPorSegundo() = 10
+  method porcentajeDePotencia() = 5 - vecesUsado
 
   method usar(nucleo) {
-    usos += 1
-    if (usos == 3) {
+    vecesUsado += 1
+    if (vecesUsado == 3) {
       nucleo.corromperse()
     }
   }
 }
 
 object corrupto {
-  method capacidadDeResolver() = 50
+  method capacidadDeResolver() = 40
 
-  method consumoPorSegundo() = 30
+  method porcentajeDePotencia() = 100
 
-  method usar(nucleo) {}
-}
-
-class NucleoDeInteligencia {
-  const velocidad
-  var memoria
-
-  method velocidadDePensamiento() = velocidad
-
-  method memoria() = memoria
-
-  method capacidadDeResolver() = self.velocidadDePensamiento() * self.memoria()
-
-  method consumoPorSegundo() = self.velocidadDePensamiento()
-
-  method usar() {
-    memoria += 1
+  method usar(nucleo) {
+    nucleo.normalizarse()
   }
 }
 
-class NucleoDeIra inherits NucleoDeInteligencia {
-  const emocionalidad
+class NucleoDeInteligencia {
+  const optimizacion
+  var memoria
+
+  method potencia() = optimizacion * memoria
+
+  method potenciaExigida(camara) = self.potencia()
+
+  method velocidadDePensamiento() = 3 * self.potencia()
+
+  method capacidadDeResolver() = self.velocidadDePensamiento() + memoria
+
+  method usar() {
+    memoria += 10
+  }
+}
+
+class NucleoDeInteligenciaEmocional inherits NucleoDeInteligencia {
+  var emocionalidad
 
   override method velocidadDePensamiento() = super() * 2
 
-  override method capacidadDeResolver() = super() - emocionalidad
+  override method capacidadDeResolver() = super() + emocionalidad
+
+  override method usar() {
+    super()
+    emocionalidad += 2
+  }
 }
 
 class Camara {
-  const property nivel
-  const property duracion
+  const property dificultad
+  const property potenciaExigible
 }
 
-class GLaDOS {
+class Agente {
   const nucleos = #{}
-  var property energia
+  const historial = []
 
   method incorporar(nucleo) {
     nucleos.add(nucleo)
@@ -77,18 +88,38 @@ class GLaDOS {
 
   method capacidadDeResolver() = nucleos.sum({nucleo => nucleo.capacidadDeResolver()})
 
-  method consumoPorSegundo() = nucleos.sum({nucleo => nucleo.consumoPorSegundo()})
-
-  method energiaNecesariaPara(camara) = self.consumoPorSegundo() * camara.duracion()
+  method potenciaExigida(camara) = nucleos.map({nucleo => nucleo.potenciaExigida(camara)}).max()
 
   method puedeUtilizar(camara) =
-    camara.nivel() < self.capacidadDeResolver() and self.energiaNecesariaPara(camara) <= energia
+    camara.dificultad() <= self.capacidadDeResolver() and
+    self.potenciaExigida(camara) <= camara.potenciaExigible()
 
   method utilizar(camara) {
     if (not self.puedeUtilizar(camara)) {
-      self.error("GLaDOS no puede utilizar la cámara")
+      self.error("El agente no puede utilizar la cámara")
     }
-    energia -= self.energiaNecesariaPara(camara)
     nucleos.forEach({nucleo => nucleo.usar()})
+    historial.add(camara)
   }
+
+  method historialDeUso() = historial.copy()
+
+  method camarasUsadas() = historial.asSet()
+}
+
+object aperture {
+  const agentes = #{}
+
+  method incorporar(agente) {
+    agentes.add(agente)
+  }
+
+  method agentesQuePuedenUtilizar(camara) = agentes.filter({agente => agente.puedeUtilizar(camara)})
+
+  method todosPuedenUtilizar(camara) = agentes.all({agente => agente.puedeUtilizar(camara)})
+
+  method agenteQueUtilizo(camara) =
+    agentes.find({agente => agente.camarasUsadas().contains(camara)})
+
+  method camarasUtilizadas() = agentes.flatMap({agente => agente.camarasUsadas()}).asSet()
 }

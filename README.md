@@ -1,115 +1,140 @@
 # Aperture Science
-Como técnico de software en Aperture Science, tu trabajo será implementar los sistemas de calibración de las cámaras de pruebas y los núcleos de personalidad de forma que estos puedan ser controlados por el Sistema Operativo en Disco y Forma de Vida Genética (GLaDOS).
-Por una satisfactoria implementación de los sistemas, se le recompensará con torta.
+
+*Aperture Science* es una empresa ficticia del videojuego **Portal**: un enorme complejo de investigación donde se hacen experimentos en **cámaras de pruebas**, salas con desafíos que hay que resolver. El complejo está controlado por **agentes**: inteligencias artificiales, como la famosa **GLaDOS**. Hay muchos agentes en Aperture Science, y cada uno tiene sus propios núcleos.
+
+Un agente no piensa solo. Tiene acoplados varios **núcleos de personalidad**, módulos que modifican su manera de pensar y, con ella, su **capacidad de resolver problemas**. Algunos núcleos lo vuelven más moral, otros más inteligente y otros más emocionales. Cada cámara exige una cierta **potencia energética** para comenzar a usarse, y cada núcleo la aprovecha a su manera. Además, con el uso, los núcleos cambian.
+
+Como técnico de software en Aperture Science, tu trabajo será implementar el sistema que permita a los agentes conocer su capacidad de resolver problemas y utilizar las cámaras de pruebas.
 
 ## Aclaraciones para el Parcial
-- El parcial es **individual** y se entrega **pusheando a este repositorio**.
-- No se considerarán commits realizados después de la hora de finalización del examen.
-- Asegurate que la versión final esté subida en GitHub.
+- El parcial es **individual**. Este es el enunciado de la parte domiciliaria. El código debe estar pusheado en el repositorio a modo de backup
+pero la entrega oficial se realiza en papel al resolver la parte presencial
 - Se evalúa el polimorfismo, delegación, buenas abstracciones, evitar lógica repetida, guardar vs. calcular, y lanzar excepciones cuando un método no puede cumplir con su responsabilidad.
 
-## 1: Los Núcleos de Personalidad y su energía.
-De los núcleos de personalidad se conoce su **temperatura (°C)** e interesa saber cuánta energía diaria requieren para recargarse (medida en unidades de energía):
+## 1: Núcleos de personalidad, agentes y cámaras
 
-- Los núcleos **estándar** (Encargados del mantenimiento general de las instalaciones) requieren 25 unidades de energía por cada grado de temperatura: `temperatura * 25`.
-- Aquellos núcleos que están **corruptos** requieren como máximo 3000 unidades de energía. A ese valor base se le multiplica su nivel de corrupción (Número entre 0 y 1). Los núcleos más inestables demandan más energía por los picos de energía que tienen. Un nivel de corrupción bajo significa que están más estables y consumen menos energía. La corrupción se indica para cada núcleo corrupto. La fórmula de consumo diario es: `3000 * corrupción`.
-- El núcleo **Central** consume 500 unidades de energía si su temperatura supera los 70 °C, y 300 si no.
+Una **cámara de pruebas** es una habitación donde se realizan experimentos. De cada cámara se conoce su **dificultad**. Además cada cámara ofrece energía a los agentes: La **potencia energética exigible** es la potencia máxima que puede ofrecer esa cámara. Este número se indica para cada cámara.
 
-Cada vez que pasa un día en las instalaciones, los núcleos recargan sus baterías de reserva usando la energía requerida, y su temperatura aumenta en la cantidad de energía consumida dividida entre 10000: `energía/10000`. Un núcleo central, al tener un mejor sistema de refrigeración, sólo aumenta su temperatura dividiendo la energía por 50000: `energía/50000`. 
+Un **agente** tiene varios **núcleos de personalidad** que utiliza al usar una cámara de pruebas.
 
-Además, los núcleos corruptos disminuyen su nivel de corrupción en 0.01, pero nunca por debajo de 0.2: `(corrupción - 0.01) ó 0.2`.
+Todo núcleo de personalidad aporta a un agente una cierta **capacidad de resolver problemas** (un número) y, al momento de usar una cámara, exige una cierta **potencia energética** (otro número).
 
-### Requerimientos
-- Saber la energía diaria que consume un núcleo.
-- Que un núcleo consuma su energía diaria.
 
-### Escenario de prueba:
+### 1.1: Núcleo de Moralidad
 
-Núcleos:
-  - El **Núcleo de Moralidad** es un Núcleo estándar de temperatura 100°C.
-  - El **Núcleo del Espacio** es un núcleo corrupto de temperatura 90°C y 0.5 de corrupción.
-  - **GLaDOS** es el Núcleo Central de Temperatura 80°C.
+Un núcleo de moralidad puede estar **normal** o **corrupto**. 
 
-Verificaciones:
- - La energía diaria que consume el **Núcleo de Moralidad** es **2500** : `100 * 25` y al recargarse queda con **100.25** de temperatura: `100 + 2500 / 10000`.
- - La energía diaria que consume el **Núcleo del Espacio** es **1500** : `3000 * 0.5` y al recargarse queda con **90.15** de temperatura: `90 + 1500 / 10000` y 0.49 de corrupción `0.5 - 0.01`.
- - La energía diaria que consume **GLaDOS** es **500** : `80 > 70` y al recargarse queda con **80.01** de temperatura: `80 + 500 / 50000`
- - El **Núcleo de los Hechos** que es como el **Núcleo del Espacio** pero su corrupción es de: `0.2` y luego de recargar su batería de reserva, su energía a consumir sigue siendo **600**: `3000 * 0.2` ya que la corrupción no puede bajar de **0.2**.
+- **Capacidad de resolver problemas:** si está normal, es 50 de base más 50 por cada vez que se ha usado: `50 * (1 + veces usadas)`. Si está corrupto, solo aporta `40`, sin importar cuántas veces se ha utilizado.
+- **Potencia que exige:** si está normal, es un porcentaje de la potencia exigible de la cámara. Si nunca se usó es el 5%, y cada uso hace que exija un 1% menos: `(5 - veces usadas)%`. Si está corrupto, siempre exige el 100% de la potencia exigible de la cámara, sin importar cuántas veces se ha utilizado.
 
-## 2: Las Cámaras de Pruebas
-
-### 2.1: Suministro Energético
-
-Las cámaras de pruebas son sectores modulares donde se llevan a cabo los experimentos dentro de Aperture Science.
-
-En cada cámara hay un generador con una reserva de **energía** (medida en unidades de energía).
-Esta cantidad debe ser suficiente para abastecer a todos los núcleos asignados a la cámara cada vez que deban recargar sus baterías (lo hacen una vez al día).
-Cuando se recargan, lo hacen todos los núcleos asignados en grupo, y la reserva del generador disminuye en la cantidad consumida por todos ellos (es decir, la sumatoria de la energía diaria demandada por los núcleos de la cámara).
-Cuidado. Si la reserva no alcanza para cubrir la demanda total, entonces no se puede realizar la recarga y ningún núcleo debe modificar su estado.
+**Nota:** Se espera una solución polimórfica. Las soluciones basadas en booleanos para modelar el estado de corrupción serán castigadas.
 
 #### Requerimientos
-- Recargar todos los núcleos de una cámara de pruebas.
-- Abastecer con más unidades de energía al generador de la cámara de pruebas.
+- Saber la capacidad de resolver problemas de un núcleo de moralidad.
+- Saber cuánta potencia le exige a una cámara un núcleo de moralidad.
 
-#### Caso de ejemplo:
-La **Cámara 01**, tiene asignados al **Núcleo de Moralidad** y el **Núcleo del Espacio**. 
-Tiene una reserva de **7500** unidades de energía en su generador. Por lo tanto solo puede recargar una única vez a los núcleos asignados, tras la recarga la reserva queda en **3500** ya que se deberían restar 4000: `2500 + 1500.` 
+#### Escenario de prueba
+La **Cámara 01** tiene dificultad 100 y potencia exigible 160.
 
-**Nota**: Los efectos sobre los núcleos son los mismos que los mencionados en el ejemplo del **punto 1**. 
+Un núcleo de moralidad nuevo, que nunca se usó:
+- aporta una capacidad de resolver problemas de **50**: `50 * (1 + 0)`.
+- le exige a la **Cámara 01** una potencia de **8**: el 5% de 160.
 
-## 2.2: Riel de Gestión
-Los núcleos pueden conectarse al _Riel de gestión_ desde una cámara de pruebas para someterse al escaneo de corrupción.
+Si ese mismo núcleo se hubiera usado 2 veces:
+- aporta una capacidad de resolver problemas de **150**: `50 * (1 + 2)`.
+- le exige a la **Cámara 01** una potencia de **4.8**: el `(5 - 2)%` de 160.
 
-- Solo los núcleos asignados a esa cámara de pruebas pueden acoplarse a su Riel.
-- No puede acoplarse un núcleo que ya esté acoplado, ni desacoplarse uno que no esté acoplado.
-- **Protocolo de Resolución de Conflictos:** Para que un núcleo se pueda acoplar al riel, debe haber al menos otro núcleo asignado a la cámara que permanezca desacoplado, ya que el sistema requiere un testigo presencial para validar el diagnóstico de corrupción.
+Pero si ese núcleo está corrupto, entonces:
+- aporta una capacidad de resolver problemas de **40**, sin importar cuántas veces se usó.
+- le exige a la **Cámara 01** una potencia de **160**: el 100% de 160.
 
-**Nota**: Se puede asumir que un Núcleo nunca está en más de una Cámara a la vez. 
+### 1.2: Núcleo de Inteligencia y Núcleo de Inteligencia Emocional
 
-### Requerimientos 
+De un **núcleo de inteligencia** interesa su **esfuerzo** y su **memoria**. Ambos son números que se indican para cada núcleo de inteligencia y determinan la **velocidad de pensamiento**: `esfuerzo * memoria / 10`.
 
-- Que un Núcleo se acople al _Riel de gestión_ desde una Cámara de Pruebas.
-- Que un Núcleo se desacople del _Riel de Gestión_ desde una Cámara de Pruebas.
-- Saber si un Núcleo de una Cámara de Pruebas está acoplado o no.
-- Saber todos los núcleos acoplados de una Cámara de Pruebas.
+La **capacidad de resolver problemas** es la suma de la velocidad de pensamiento y la memoria: `velocidad + memoria`.
 
-#### Caso de ejemplo:
+Mientras que la **potencia que exige** a una cámara es de `30 * esfuerzo`.
 
-Además de la **Cámara 01** usada en el punto anterior, vamos a tener una segunda cámara llamada **Cámara 02**. 
-Tiene como núcleos asignados a **GLaDOS** y a un nuevo núcleo estándar llamado **Núcleo de la Curiosidad**, de 82 °C de temperatura.
-La reserva de energía de la **Cámara 02** está en 0.
+El **núcleo de inteligencia emocional** es una especie de núcleo de inteligencia con algunas particularidades:
+- Su velocidad de pensamiento es el **doble** de la que tendría un núcleo de inteligencia con los mismos datos.
+- Además se conoce su **emocionalidad** (otro número), que le suma o resta capacidad de resolver problemas. Por ejemplo, un núcleo emocional que modele la ira tendrá la emocionalidad en negativo, mientras que otro basado en la intuición la tendrá en positivo.
+- Por lo tanto, su **capacidad de resolver problemas** es `2 * ( esfuerzo * memoria / 10)  + memoria + emocionalidad`.
+- La potencia que exige es igual a la de un núcleo de inteligencia: `30 * esfuerzo`.
 
-Probar la siguiente secuencia:
+**Nota:** es posible que la capacidad de resolver problemas sea negativa, sin que eso se considere un problema. Se espera además una solución que no duplique código.
 
-- **GLaDOS** se acopla sin problemas en la **Cámara 02**
-- Si intenta volver a acoplarse, no podría hacerlo.
-- El **Núcleo de Moralidad** no podría acoplarse en la **Cámara 02** porque no está asignado a esa cámara.
-- El **Núcleo de la Curiosidad** no podría acoplarse en la **Cámara 02**, ya que no quedaría ningún núcleo desacoplado como testigo (GLaDOS está acoplada).
-- Si el **Núcleo de la Curiosidad** intenta desacoplarse en la **Cámara 02** no podría, ya que nunca estuvo acoplado.
-- El **Núcleo del Espacio** se acopla sin problemas en la **Cámara 01**.
-- El **Núcleo del Espacio** se desacopla sin problemas en la **Cámara 01**.
-- El **Núcleo de Moralidad** se acopla sin problemas en la **Cámara 01**.
-- Verificar que el único núcleo acoplado de la **Cámara 02** es **GLaDOS**.
-- Verificar que sólo el **Núcleo de Moralidad** está acoplado a la **Cámara 01**.
+#### Requerimientos
+- Saber la capacidad de resolver problemas de un núcleo de inteligencia y de un núcleo de inteligencia emocional.
+- Saber cuánta potencia le exige a una cámara un núcleo de inteligencia y un núcleo de inteligencia emocional.
 
+#### Escenario de prueba
+- El núcleo de inteligencia base tiene esfuerzo 5 y memoria 40. Le exige a la **Cámara 01** una potencia de **150**: `30 * 5`, y aporta una capacidad de resolver problemas de **60**: `5 * 40 / 10 + 40`.
+- El núcleo de ira, que es un núcleo de inteligencia emocional de esfuerzo 5, memoria 40 y emocionalidad -30, le exige a la **Cámara 01** una potencia de **150** y aporta una capacidad de **50**: `2 * (5 * 40 / 10) + 40 - 30`.
 
-## Aperture Laboratories
+## 2: Agentes usando cámaras
 
-Las instalaciones de **Aperture Laboratories** poseen una red de Cámaras de Pruebas bajo la supervisión del Núcleo Central, GLaDOS, los científicos te pidieron que añadas la siguiente información al sistema:
+Un **agente** tiene una colección de núcleos de personalidad acoplados y los utiliza para usar una cámara de pruebas.
 
-- Los Núcleos Sobrecalentados: el conjunto que se forma por el Núcleo de mayor temperatura de cada Cámara de Pruebas.
-- La cantidad de energía diaria necesaria para abastecer todas las Cámaras de Prueba de las instalaciones.
-- La Cámara de Pruebas con más núcleos acoplados al Riel de Gestión.
+Para que un agente pueda **utilizar** una cámara deben cumplirse dos condiciones:
+- La **dificultad** de la cámara es menor o igual que la **capacidad de resolver problemas** del agente, que es la suma de las capacidades de todos sus núcleos.
+- La **potencia que exige** el agente a la cámara es menor o igual que la potencia exigible de la cámara. El agente exige la mayor de las potencias que exigen sus núcleos a esa cámara.
 
-#### Caso de ejemplo:
-El complejo **Aperture Laboratories** está compuesto por la **Cámara 01** y **Cámara 02**, con los mismos núcleos asignados de los puntos previos.
-Acoplar a **GLaDOS** en la **Cámara 02**.
-Acoplar al **Núcleo de Moralidad** en la **Cámara 01**.
-Desacoplar a **GLaDOS** en la **Cámara 02**
+Si el agente no puede utilizar la cámara, no debe ocurrir ningún cambio.
 
-Verificar que:
+Si puede, utiliza todos sus núcleos, teniendo estos efectos:
+- Si el núcleo de moralidad estaba corrupto, vuelve a estar normal, como si nunca se hubiera usado (el agente corre su propia rutina de rescate).
+- A la tercera vez que se usa un núcleo de moralidad normal, se corrompe.
+- Un núcleo de inteligencia aumenta su memoria en 10 unidades.
+- Un núcleo de inteligencia emocional aumenta su memoria en 10 unidades y además su emocionalidad aumenta en 2.
 
- - Los núcleos sobrecalentados de **Aperture Laboratories** son el **Núcleo de Moralidad** y el **Núcleo de la Curiosidad**.
- - La cantidad de energía diaria que consumen los núcleos del **Complejo** es 6550. 
- - La **Cámara 01** es la cámara con más acoplados.
+Además, cada agente recuerda las cámaras que utilizó.
 
+#### Requerimientos
+- Que un agente utilice una cámara (teniendo en cuenta las validaciones necesarias y los efectos en sus núcleos).
+- Saber todas las cámaras que utilizó un agente (sin repetidos).
+- Saber la historia de uso de las cámaras de un agente, en el orden en que las usó (con repetidos).
+
+#### Escenario de prueba
+**GLaDOS** es un agente que tiene acoplados el núcleo de moralidad, el núcleo de inteligencia y el núcleo de ira de los ejemplos anteriores. Además de la **Cámara 01**, se usan:
+- la **Cámara 02**, de dificultad 300 y potencia exigible 200.
+- la **Cámara 03**, de dificultad 100 y potencia exigible 140.
+- la **Cámara 04**, de dificultad 140 y potencia exigible 200.
+
+Probar la siguiente secuencia (entre paréntesis, la explicación de cada resultado):
+
+1. GLaDOS intenta utilizar la **Cámara 02**. No puede. (Su capacidad es 160: `50 + 60 + 50`, y la dificultad es 300.)
+2. GLaDOS intenta utilizar la **Cámara 03**. No puede. (Exige una potencia de 150, el máximo entre `8`, `150` y `150`, y la cámara solo admite 140.)
+3. GLaDOS utiliza la **Cámara 01**. Puede. (La dificultad es 100 y la cámara admite 160.) Su capacidad pasa a ser 247: `100 + 75 + 72`.
+4. GLaDOS intenta utilizar la **Cámara 02** otra vez. Sigue sin poder. (300 es mayor que 247.)
+5. GLaDOS utiliza la **Cámara 04**. Puede. Su capacidad pasa a ser 334: `150 + 90 + 94`.
+6. GLaDOS utiliza la **Cámara 02**. Ahora sí puede, porque 300 no supera 334. Pero es el tercer uso del núcleo de moralidad, que se corrompe, y la capacidad de GLaDOS baja a 261: `40 + 105 + 116`.
+7. GLaDOS intenta utilizar la **Cámara 02**. No puede. (La corrupción le bajó la capacidad: 300 es mayor que 261.)
+8. GLaDOS utiliza la **Cámara 01**. Puede. (El núcleo de moralidad corrupto exige el 100% de la potencia de la cámara, 160, que es justo lo que admite.) El núcleo de moralidad vuelve a estar normal y la capacidad de GLaDOS pasa a ser 308: `50 + 120 + 138`.
+9. GLaDOS utiliza la **Cámara 02**. Puede, porque 300 no supera 308.
+
+Verificar que las cámaras que usó GLaDOS son la **Cámara 01**, la **Cámara 04** y la **Cámara 02**, y que su historia de uso es: Cámara 01, Cámara 04, Cámara 02, Cámara 01, Cámara 02.
+
+## 3: Consultas sobre la empresa
+
+Una **empresa** tiene una colección de agentes. Los científicos necesitan información sobre la empresa.
+
+#### Requerimientos
+- Los **núcleos más hábiles**: de cada agente me quedo con el núcleo que le aporte más capacidad para resolver problemas.
+- La **cantidad de agentes** que han utilizado alguna vez una cámara.
+- Si una cámara es **imposible** para la empresa: es imposible si ningún agente la puede utilizar.
+
+#### Escenario de prueba
+**Aperture Science** es una empresa que tiene a **GLaDOS** y a **Wheatley**, un agente con un único núcleo de inteligencia de esfuerzo 2 y memoria 100, es decir, con una capacidad de **120** y una potencia exigida de **60**. Se usan las **Cámaras 01, 02, 03 y 04** de los puntos anteriores.
+
+Verificar que, al inicio:
+- Los núcleos más hábiles son el núcleo de inteligencia de GLaDOS (aporta 60, más que los 50 de la moralidad y de la ira) y el único núcleo de Wheatley.
+- Ningún agente utilizó una cámara todavía.
+- La **Cámara 02** es imposible para la empresa: GLaDOS tiene capacidad 160 y Wheatley 120, y la dificultad es 300. En cambio, la **Cámara 01** y la **Cámara 04** no lo son: GLaDOS puede utilizarlas.
+
+Luego, GLaDOS utiliza la **Cámara 04** y la **Cámara 01**. Verificar que:
+- Los núcleos más hábiles ahora son el núcleo de moralidad de GLaDOS (aporta 150, porque se usó 2 veces) y el único núcleo de Wheatley.
+- Un agente utilizó alguna cámara.
+- La **Cámara 02** ya no es imposible: la capacidad de GLaDOS creció a 334 con el uso.
+
+Por último, Wheatley utiliza la **Cámara 03**. Verificar que ahora son dos los agentes que utilizaron alguna cámara.

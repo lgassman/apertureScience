@@ -1,0 +1,80 @@
+import aperture.*
+
+describe "aperture science" {
+  // Punto 1.1: la Cámara 01 y el núcleo de moralidad
+  const camara01 = new Camara(dificultad = 100, potenciaExigible = 160)
+  const moralidad = new NucleoDeMoralidad()
+
+  // Punto 1.2: los núcleos de inteligencia e ira
+  const inteligenciaBase = new NucleoDeInteligencia(esfuerzo = 5, memoria = 40)
+  const ira = new NucleoDeInteligenciaEmocional(esfuerzo = 5, memoria = 40, emocionalidad = -30)
+
+  // Punto 2: GLaDOS y las Cámaras 02, 03 y 04
+  const glados = new Agente(nucleos = #{moralidad, inteligenciaBase, ira})
+  const camara02 = new Camara(dificultad = 300, potenciaExigible = 200)
+  const camara03 = new Camara(dificultad = 100, potenciaExigible = 140)
+  const camara04 = new Camara(dificultad = 140, potenciaExigible = 200)
+
+  // Punto 3: Wheatley y la empresa Aperture Science
+  const inteligenciaWheatley = new NucleoDeInteligencia(esfuerzo = 2, memoria = 100)
+  const wheatley = new Agente(nucleos = #{inteligenciaWheatley})
+  const aperture = new Empresa(agentes = #{glados, wheatley})
+
+  test "1.1 núcleo de moralidad" {
+    assert.equals(50, moralidad.capacidadDeResolver())
+    assert.equals(8, moralidad.potenciaExigida(camara01))
+
+    moralidad.condicion(new Normal(vecesUsado = 2))
+    assert.equals(150, moralidad.capacidadDeResolver())
+    assert.equals(4.8, moralidad.potenciaExigida(camara01))
+
+    moralidad.condicion(corrupto)
+    assert.equals(40, moralidad.capacidadDeResolver())
+    assert.equals(160, moralidad.potenciaExigida(camara01))
+  }
+
+  test "1.2 núcleos de inteligencia e ira" {
+    assert.equals(60, inteligenciaBase.capacidadDeResolver())
+    assert.equals(150, inteligenciaBase.potenciaExigida(camara01))
+
+    assert.equals(50, ira.capacidadDeResolver())
+    assert.equals(150, ira.potenciaExigida(camara01))
+  }
+
+  test "2 agentes usando cámaras" {
+    assert.throwsException({ glados.utilizar(camara02) })
+    assert.throwsException({ glados.utilizar(camara03) })
+
+    glados.utilizar(camara01)
+    assert.throwsException({ glados.utilizar(camara02) })
+
+    glados.utilizar(camara04)
+
+    glados.utilizar(camara02)
+    assert.throwsException({ glados.utilizar(camara02) })
+
+    glados.utilizar(camara01)
+    glados.utilizar(camara02)
+
+    assert.equals(#{camara01, camara04, camara02}, glados.camarasUsadas())
+    assert.equals([camara01, camara04, camara02, camara01, camara02], glados.historialDeUso())
+  }
+
+  test "3 consultas de la empresa" {
+    assert.equals(#{inteligenciaBase, inteligenciaWheatley}, aperture.nucleosMasHabiles())
+    assert.equals(0, aperture.cantidadDeAgentesQueUtilizaronCamaras())
+    assert.that(aperture.esImposible(camara02))
+    assert.notThat(aperture.esImposible(camara01))
+    assert.notThat(aperture.esImposible(camara04))
+
+    glados.utilizar(camara04)
+    glados.utilizar(camara01)
+
+    assert.equals(#{moralidad, inteligenciaWheatley}, aperture.nucleosMasHabiles())
+    assert.equals(1, aperture.cantidadDeAgentesQueUtilizaronCamaras())
+    assert.notThat(aperture.esImposible(camara02))
+
+    wheatley.utilizar(camara03)
+    assert.equals(2, aperture.cantidadDeAgentesQueUtilizaronCamaras())
+  }
+}

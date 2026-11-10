@@ -1,5 +1,9 @@
 # Aperture Science
-Como técnico de software en Aperture Science, tu trabajo será implementar los sistemas de calibración de las cámaras de pruebas y los núcleos de personalidad de forma que estos puedan ser controlados por el Sistema Operativo en Disco y Forma de Vida Genética (GLaDOS).
+
+El laboratorio de investigación _Aperture Science_ (AS) diseña sistemas ciberfísicos (CPS por sus siglas en inglés) y los somete a evaluaciones en ambientes controlados denominados _cámaras de prueba_. Estos CPS (también llamados robots) tienen la posibilidad de configurarse con diferentes núcleos que emulan diferentes personalidades humanas.
+
+Como técnico de software en AS, tu trabajo será implementar los sistemas de calibración de las cámaras de prueba y los núcleos de personalidad de forma que estos puedan ser controlados por el _Sistema Operativo en Disco y Forma de Vida Genética_ (GLaDOS).
+
 Por una satisfactoria implementación de los sistemas, se le recompensará con torta.
 
 ## Aclaraciones para el Parcial
@@ -8,16 +12,18 @@ Por una satisfactoria implementación de los sistemas, se le recompensará con t
 - Asegurate que la versión final esté subida en GitHub.
 - Se evalúa el polimorfismo, delegación, buenas abstracciones, evitar lógica repetida, guardar vs. calcular, y lanzar excepciones cuando un método no puede cumplir con su responsabilidad.
 
-## 1: Los Núcleos de Personalidad y su energía.
-De los núcleos de personalidad se conoce su **temperatura (°C)** e interesa saber cuánta energía diaria requieren para recargarse (medida en unidades de energía):
+## 1: Los núcleos de personalidad y su energía.
+
+Al final de cada día los nucleos de personalidad se deben recargar con una determinada energía que depende del tipo que sea, y su **temperatura** aumenta en función de esa cantidad de energía: `energía/10000`. Los núcleos se configuran con una determinada temperatura inicial medida en C°
+
+Existen diferentes tipos de nucleos:
 
 - Los núcleos **estándar** (Encargados del mantenimiento general de las instalaciones) requieren 25 unidades de energía por cada grado de temperatura: `temperatura * 25`.
-- Aquellos núcleos que están **corruptos** requieren como máximo 3000 unidades de energía. A ese valor base se le multiplica su nivel de corrupción (Número entre 0 y 1). Los núcleos más inestables demandan más energía por los picos de energía que tienen. Un nivel de corrupción bajo significa que están más estables y consumen menos energía. La corrupción se indica para cada núcleo corrupto. La fórmula de consumo diario es: `3000 * corrupción`.
-- El núcleo **Central** consume 500 unidades de energía si su temperatura supera los 70 °C, y 300 si no.
 
-Cada vez que pasa un día en las instalaciones, los núcleos recargan sus baterías de reserva usando la energía requerida, y su temperatura aumenta en la cantidad de energía consumida dividida entre 10000: `energía/10000`. Un núcleo central, al tener un mejor sistema de refrigeración, sólo aumenta su temperatura dividiendo la energía por 50000: `energía/50000`. 
+- Los núcleos que están **corruptos** requieren como máximo 3000 unidades de energía, y se utiliza el nivel de corrupción (número entre 0 y 1) como una proporción de esa base. La corrupción se indica para cada núcleo corrupto, y mientras sea mas bajo se interpreta como que el núcleo está más estable, y por lo tanto consumen menos energía.  La fórmula de consumo diario es: `3000 * corrupción`. Además, al consumir su energía diaria, los núcleos corruptos disminuyen su nivel de corrupción en 0.01, pero nunca por debajo de 0.2: `(corrupción - 0.01) ó 0.2`.
 
-Además, los núcleos corruptos disminuyen su nivel de corrupción en 0.01, pero nunca por debajo de 0.2: `(corrupción - 0.01) ó 0.2`.
+- El núcleo **Central** consume 500 unidades de energía si su temperatura supera los 70 °C, y 300 en caso contrario. Un núcleo central, al tener un mejor sistema de refrigeración, sólo aumenta su temperatura dividiendo la energía por 50000: `energía/50000`. 
+
 
 ### Requerimientos
 - Saber la energía diaria que consume un núcleo.
@@ -26,8 +32,8 @@ Además, los núcleos corruptos disminuyen su nivel de corrupción en 0.01, pero
 ### Escenario de prueba:
 
 Núcleos:
-  - El **Núcleo de Moralidad** es un Núcleo estándar de temperatura 100°C.
-  - El **Núcleo del Espacio** es un núcleo corrupto de temperatura 90°C y 0.5 de corrupción.
+  - El **Núcleo de Moralidad** es un núcleo estándar de temperatura inicial en 100°C.
+  - El **Núcleo del Espacio** es un núcleo corrupto de temperatura inicial en 90°C y 0.5 de corrupción.
   - **GLaDOS** es el Núcleo Central de Temperatura 80°C.
 
 Verificaciones:
@@ -36,16 +42,15 @@ Verificaciones:
  - La energía diaria que consume **GLaDOS** es **500** : `80 > 70` y al recargarse queda con **80.01** de temperatura: `80 + 500 / 50000`
  - El **Núcleo de los Hechos** que es como el **Núcleo del Espacio** pero su corrupción es de: `0.2` y luego de recargar su batería de reserva, su energía a consumir sigue siendo **600**: `3000 * 0.2` ya que la corrupción no puede bajar de **0.2**.
 
-## 2: Las Cámaras de Pruebas
+## 2: Las cámaras para pruebas
 
 ### 2.1: Suministro Energético
 
-Las cámaras de pruebas son sectores modulares donde se llevan a cabo los experimentos dentro de Aperture Science.
-
-En cada cámara hay un generador con una reserva de **energía** (medida en unidades de energía).
+Las cámaras para pruebas son sectores modulares donde se llevan a cabo los experimentos dentro de Aperture Science. En cada cámara hay un generador con una reserva de **energía** (medida en unidades de energía).
 Esta cantidad debe ser suficiente para abastecer a todos los núcleos asignados a la cámara cada vez que deban recargar sus baterías (lo hacen una vez al día).
+
 Cuando se recargan, lo hacen todos los núcleos asignados en grupo, y la reserva del generador disminuye en la cantidad consumida por todos ellos (es decir, la sumatoria de la energía diaria demandada por los núcleos de la cámara).
-Cuidado. Si la reserva no alcanza para cubrir la demanda total, entonces no se puede realizar la recarga y ningún núcleo debe modificar su estado.
+Cuidado: si la reserva no alcanza para cubrir la demanda total, entonces no se puede realizar la recarga y ningún núcleo debe modificar su estado.
 
 #### Requerimientos
 - Recargar todos los núcleos de una cámara de pruebas.

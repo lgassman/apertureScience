@@ -90,17 +90,20 @@ class Agente {
     camara.dificultad() <= self.capacidadDeResolver() and
     self.potenciaExigida(camara) <= camara.potenciaExigible()
 
-  method utilizar(camara) {
+  method validarUtilizar(camara) {
     if (not self.puedeUtilizar(camara)) {
       self.error("El agente no puede utilizar la cámara")
     }
+  }
+  method utilizar(camara) {
+    self.validarUtilizar(camara)
     nucleos.forEach({nucleo => nucleo.usar()})
     historial.add(camara)
   }
 
   method nucleoMasHabil() = nucleos.max({nucleo => nucleo.capacidadDeResolver()})
 
-  method historialDeUso() = historial.copy()
+  method historialDeUso() = historial
 
   method camarasUsadas() = historial.asSet()
 }

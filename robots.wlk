@@ -3,7 +3,7 @@ class NucleoDeMoralidad {
 
   method capacidadDeResolver() = condicion.capacidadDeResolver()
 
-  method potenciaExigida(camara) = camara.potenciaExigible() * condicion.porcentajeDePotencia() / 100
+  method potenciaNecesaria(camara) = camara.potenciaDisponible() * condicion.porcentajeDePotencia() / 100
 
   method usar() {
     condicion.usar(self)
@@ -49,7 +49,7 @@ class NucleoDeInteligencia {
 
   method potencia() = 30 * esfuerzo
 
-  method potenciaExigida(camara) = self.potencia()
+  method potenciaNecesaria(camara) = self.potencia()
 
   method velocidadDePensamiento() = esfuerzo * memoria / 10
 
@@ -75,46 +75,46 @@ class NucleoDeInteligenciaEmocional inherits NucleoDeInteligencia {
 
 class Camara {
   const property dificultad
-  const property potenciaExigible
+  const property potenciaDisponible
 }
 
-class Agente {
+class Robot {
   const nucleos = #{}
   const historial = []
 
   method capacidadDeResolver() = nucleos.sum({nucleo => nucleo.capacidadDeResolver()})
 
-  method potenciaExigida(camara) = nucleos.map({nucleo => nucleo.potenciaExigida(camara)}).max()
+  method potenciaNecesaria(camara) = nucleos.map({nucleo => nucleo.potenciaNecesaria(camara)}).max()
 
-  method puedeUtilizar(camara) =
+  method puedeSuperar(camara) =
     camara.dificultad() <= self.capacidadDeResolver() and
-    self.potenciaExigida(camara) <= camara.potenciaExigible()
+    self.potenciaNecesaria(camara) <= camara.potenciaDisponible()
 
-  method validarUtilizar(camara) {
-    if (not self.puedeUtilizar(camara)) {
-      self.error("El agente no puede utilizar la cámara")
+  method validarSuperar(camara) {
+    if (not self.puedeSuperar(camara)) {
+      self.error("El robot no puede superar la cámara")
     }
   }
-  method utilizar(camara) {
-    self.validarUtilizar(camara)
+  method superar(camara) {
+    self.validarSuperar(camara)
     nucleos.forEach({nucleo => nucleo.usar()})
     historial.add(camara)
   }
 
   method nucleoMasHabil() = nucleos.max({nucleo => nucleo.capacidadDeResolver()})
 
-  method historialDeUso() = historial
+  method historialDeSuperacion() = historial
 
-  method camarasUsadas() = historial.asSet()
+  method camarasSuperadas() = historial.asSet()
 }
 
 class Empresa {
-  const agentes = #{}
+  const robots = #{}
 
-  method nucleosMasHabiles() = agentes.map({agente => agente.nucleoMasHabil()}).asSet()
+  method nucleosMasHabiles() = robots.map({robot => robot.nucleoMasHabil()}).asSet()
 
-  method cantidadDeAgentesQueUtilizaronCamaras() =
-    agentes.filter({agente => not agente.camarasUsadas().isEmpty()}).size()
+  method cantidadDeRobotsQueSuperaron(camara) =
+    robots.filter({robot => robot.camarasSuperadas().contains(camara)}).size()
 
-  method esImposible(camara) = not agentes.any({agente => agente.puedeUtilizar(camara)})
+  method esImposible(camara) = not robots.any({robot => robot.puedeSuperar(camara)})
 }

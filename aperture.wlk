@@ -1,5 +1,5 @@
 class NucleoDeMoralidad {
-  var condicion = new Normal()
+  var property condicion = new Normal()
 
   method capacidadDeResolver() = condicion.capacidadDeResolver()
 
@@ -44,14 +44,14 @@ object corrupto {
 }
 
 class NucleoDeInteligencia {
-  const optimizacion
+  const esfuerzo
   var memoria
 
-  method potencia() = optimizacion * memoria
+  method potencia() = 30 * esfuerzo
 
   method potenciaExigida(camara) = self.potencia()
 
-  method velocidadDePensamiento() = 3 * self.potencia()
+  method velocidadDePensamiento() = esfuerzo * memoria / 10
 
   method capacidadDeResolver() = self.velocidadDePensamiento() + memoria
 
@@ -82,10 +82,6 @@ class Agente {
   const nucleos = #{}
   const historial = []
 
-  method incorporar(nucleo) {
-    nucleos.add(nucleo)
-  }
-
   method capacidadDeResolver() = nucleos.sum({nucleo => nucleo.capacidadDeResolver()})
 
   method potenciaExigida(camara) = nucleos.map({nucleo => nucleo.potenciaExigida(camara)}).max()
@@ -102,24 +98,20 @@ class Agente {
     historial.add(camara)
   }
 
+  method nucleoMasHabil() = nucleos.max({nucleo => nucleo.capacidadDeResolver()})
+
   method historialDeUso() = historial.copy()
 
   method camarasUsadas() = historial.asSet()
 }
 
-object aperture {
+class Empresa {
   const agentes = #{}
 
-  method incorporar(agente) {
-    agentes.add(agente)
-  }
+  method nucleosMasHabiles() = agentes.map({agente => agente.nucleoMasHabil()}).asSet()
 
-  method agentesQuePuedenUtilizar(camara) = agentes.filter({agente => agente.puedeUtilizar(camara)})
+  method cantidadDeAgentesQueUtilizaronCamaras() =
+    agentes.filter({agente => not agente.camarasUsadas().isEmpty()}).size()
 
-  method todosPuedenUtilizar(camara) = agentes.all({agente => agente.puedeUtilizar(camara)})
-
-  method agenteQueUtilizo(camara) =
-    agentes.find({agente => agente.camarasUsadas().contains(camara)})
-
-  method camarasUtilizadas() = agentes.flatMap({agente => agente.camarasUsadas()}).asSet()
+  method esImposible(camara) = not agentes.any({agente => agente.puedeUtilizar(camara)})
 }

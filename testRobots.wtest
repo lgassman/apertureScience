@@ -1,0 +1,83 @@
+import robots.*
+
+describe "pruebas de robots" {
+  // Punto 1.1: la Cámara 01 y el núcleo de moralidad
+  const camara01 = new Camara(dificultad = 100, potenciaDisponible = 160)
+  const moralidad = new NucleoDeMoralidad()
+
+  // Punto 1.2: los núcleos de inteligencia e ira
+  const inteligenciaBase = new NucleoDeInteligencia(esfuerzo = 5, memoria = 40)
+  const ira = new NucleoDeInteligenciaEmocional(esfuerzo = 5, memoria = 40, emocionalidad = -30)
+
+  // Punto 2: Dors y las Cámaras 02, 03 y 04
+  const dors = new Robot(nucleos = #{moralidad, inteligenciaBase, ira})
+  const camara02 = new Camara(dificultad = 300, potenciaDisponible = 200)
+  const camara03 = new Camara(dificultad = 100, potenciaDisponible = 140)
+  const camara04 = new Camara(dificultad = 140, potenciaDisponible = 200)
+
+  // Punto 3: Daneel y la empresa Fundación
+  const inteligenciaDaneel = new NucleoDeInteligencia(esfuerzo = 2, memoria = 100)
+  const daneel = new Robot(nucleos = #{inteligenciaDaneel})
+  const fundacion = new Empresa(robots = #{dors, daneel})
+
+  test "1.1 núcleo de moralidad" {
+    assert.equals(50, moralidad.capacidadDeResolver())
+    assert.equals(8, moralidad.potenciaNecesaria(camara01))
+
+    moralidad.condicion(new Normal(vecesUsado = 2))
+    assert.equals(150, moralidad.capacidadDeResolver())
+    assert.equals(4.8, moralidad.potenciaNecesaria(camara01))
+
+    moralidad.condicion(corrupto)
+    assert.equals(40, moralidad.capacidadDeResolver())
+    assert.equals(160, moralidad.potenciaNecesaria(camara01))
+  }
+
+  test "1.2 núcleos de inteligencia e ira" {
+    assert.equals(60, inteligenciaBase.capacidadDeResolver())
+    assert.equals(150, inteligenciaBase.potenciaNecesaria(camara01))
+
+    assert.equals(50, ira.capacidadDeResolver())
+    assert.equals(150, ira.potenciaNecesaria(camara01))
+  }
+
+  test "2 robots superando cámaras" {
+    assert.throwsException({ dors.superar(camara02) })
+    assert.throwsException({ dors.superar(camara03) })
+
+    dors.superar(camara01)
+    assert.throwsException({ dors.superar(camara02) })
+
+    dors.superar(camara04)
+
+    dors.superar(camara02)
+    assert.throwsException({ dors.superar(camara02) })
+
+    dors.superar(camara01)
+    dors.superar(camara02)
+
+    assert.equals(#{camara01, camara04, camara02}, dors.camarasSuperadas())
+    assert.equals([camara01, camara04, camara02, camara01, camara02], dors.historialDeSuperacion())
+  }
+
+  test "3 consultas de la empresa" {
+    assert.equals(#{inteligenciaBase, inteligenciaDaneel}, fundacion.nucleosMasHabiles())
+    assert.equals(0, fundacion.cantidadDeRobotsQueSuperaron(camara01))
+    assert.that(fundacion.esImposible(camara02))
+    assert.notThat(fundacion.esImposible(camara01))
+    assert.notThat(fundacion.esImposible(camara04))
+
+    dors.superar(camara04)
+    dors.superar(camara01)
+
+    assert.equals(#{moralidad, inteligenciaDaneel}, fundacion.nucleosMasHabiles())
+    assert.equals(1, fundacion.cantidadDeRobotsQueSuperaron(camara01))
+    assert.equals(1, fundacion.cantidadDeRobotsQueSuperaron(camara04))
+    assert.equals(0, fundacion.cantidadDeRobotsQueSuperaron(camara03))
+    assert.notThat(fundacion.esImposible(camara02))
+
+    daneel.superar(camara01)
+    assert.equals(2, fundacion.cantidadDeRobotsQueSuperaron(camara01))
+    assert.equals(1, fundacion.cantidadDeRobotsQueSuperaron(camara04))
+  }
+}
